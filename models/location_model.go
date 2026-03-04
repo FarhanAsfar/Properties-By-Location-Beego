@@ -7,5 +7,5 @@ type LocationResponse struct {
 
 // each location entry
 type LocationGeoInfo struct {
-	Slug string `json:"Slug"`
+	LocationSlug string `json:"LocationSlug"`
 }
