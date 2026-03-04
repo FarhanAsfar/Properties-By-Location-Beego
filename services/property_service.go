@@ -42,6 +42,7 @@ func GetPropertiesByLocation(location string) ([]models.Property, error) {
 // perform two external api calls
 func fetchProperties(ctx context.Context, location string) ([]models.Property, error) {
 	baseURL, _ := web.AppConfig.String("travel_api_base_url")
+	fmt.Printf("Debug: url: [%s]\n", baseURL)
 	origin, _ := web.AppConfig.String("travel_api_origin")
 
 	// resolve location slug
@@ -53,12 +54,12 @@ func fetchProperties(ctx context.Context, location string) ([]models.Property, e
 		return nil, fmt.Errorf("Failed to fetch location: %w", err)
 	}
 
-	if locationResp == nil || len(locationResp.Data) == 0 {
+	if locationResp == nil || len(locationResp.GeoInfo.Slug) == 0 {
 		return nil, fmt.Errorf("No location data found for: %s", location)
 	}
 
 	// extract slug from the result
-	rawSlug := locationResp.Data[0].Slug
+	rawSlug := locationResp.GeoInfo.Slug
 
 	//replace '/' with ':'
 	categorySlug := strings.ReplaceAll(rawSlug, "/", ":")
@@ -79,22 +80,26 @@ func fetchProperties(ctx context.Context, location string) ([]models.Property, e
 		return nil, fmt.Errorf("Empty response from category API")
 	}
 
-	properties := flattenProperties(categoryResp.Data.Properties)
+	properties := flattenProperties(categoryResp.Result.Items)
 
 	return properties, nil
 }
 
 // map PropertyItem structs to Property model
-func flattenProperties(items []models.PropertyItem) []models.Property {
+func flattenProperties(items []models.CategoryItem) []models.Property {
 	result := make([]models.Property, 0, len(items))
 
 	for _, item := range items {
 		result = append(result, models.Property{
 			ID:           item.ID,
-			PropertyName: item.PropertyName,
-			Country:      item.Country,
-			City:         item.City,
-			Slug:         item.Slug,
+			PropertyName: item.Property.PropertyName,
+			PropertyType: item.Property.PropertyType,
+			City:         item.GeoInfo.City,
+			Country:      item.GeoInfo.Country,
+			Price:        item.Property.Price,
+			ReviewScore:  item.Property.ReviewScore,
+			StarRating:   item.Property.StarRating,
+			Slug:         item.Property.PropertySlug,
 		})
 	}
 	return result
