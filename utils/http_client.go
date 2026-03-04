@@ -34,7 +34,7 @@ func FetchandDecode[T any](ctx context.Context, url string, headers map[string]s
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("Unexpected statud code: %d", resp.StatusCode)
+		return nil, fmt.Errorf("Unexpected status code: %d", resp.StatusCode)
 	}
 
 	// decode json response into a generic type T

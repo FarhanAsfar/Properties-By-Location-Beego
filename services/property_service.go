@@ -36,7 +36,7 @@ func GetPropertiesByLocation(location string) ([]models.Property, error) {
 	locationChannel := make(chan locationResult, 1)
 	go fetchLocation(ctx, baseURL, location, locationChannel)
 
-	// block until the location goroutine sponse
+	// block until the location goroutine response
 	var slug string
 	select {
 	case res := <-locationChannel:
@@ -46,7 +46,7 @@ func GetPropertiesByLocation(location string) ([]models.Property, error) {
 		slug = res.slug
 
 	case <-ctx.Done():
-		return nil, fmt.Errorf("Timed out , waiting fo location reponse")
+		return nil, fmt.Errorf("Timed out , waiting fo location response")
 	}
 
 	// convert slug separator '/' with ':'
@@ -55,7 +55,7 @@ func GetPropertiesByLocation(location string) ([]models.Property, error) {
 	categoryChannel := make(chan categoryResult, 1)
 	go fetchCategory(ctx, baseURL, origin, categorySlug, categoryChannel)
 
-	// block until the category gorouting responds
+	// block until the category goroutine responds
 	select {
 	case res := <-categoryChannel:
 		if res.err != nil {
@@ -63,7 +63,7 @@ func GetPropertiesByLocation(location string) ([]models.Property, error) {
 		}
 		return flattenProperties(res.items), nil
 	case <-ctx.Done():
-		return nil, fmt.Errorf("Timed out, waiting for properties reponse")
+		return nil, fmt.Errorf("Timed out, waiting for properties response")
 	}
 }
 
