@@ -30,7 +30,3 @@ type ItemProperty struct {
 	StarRating   int     `json:"StarRating"`
 	FeatureImage string  `json:"FeatureImage"`
 }
-
-type ItemPartner struct {
-	URL string `json:"URL"`
-}
