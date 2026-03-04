@@ -2,10 +2,10 @@ package models
 
 // response from /api/v1/get-properties/:location
 type LocationResponse struct {
-	Data []LocationItem `json:"data"`
+	GeoInfo LocationGeoInfo `json:"GeoInfo"`
 }
 
 // each location entry
-type LocationItem struct {
-	Slug string `json:"LocationSlug"`
+type LocationGeoInfo struct {
+	Slug string `json:"Slug"`
 }
