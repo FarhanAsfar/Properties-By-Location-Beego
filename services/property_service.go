@@ -11,78 +11,98 @@ import (
 	"github.com/beego/beego/v2/server/web"
 )
 
-type propertyResult struct {
-	properties []models.Property
-	err        error
+// carries the result through the channel of the location api call
+type locationResult struct {
+	slug string
+	err  error
+}
+
+// carries outcome of category api call
+type categoryResult struct {
+	items []models.CategoryItem
+	err   error
 }
 
 func GetPropertiesByLocation(location string) ([]models.Property, error) {
-	// channel for receiving result
-	resultChannel := make(chan propertyResult, 1)
 
-	// timeout for the fetch operation
+	//timeout context for both goroutines
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// asynchronous api call using goroutine
-	go func() {
-		props, err := fetchProperties(ctx, location)
-		resultChannel <- propertyResult{properties: props, err: err}
-	}()
+	baseURL, _ := web.AppConfig.String("travel_api_base_url")
+	origin, _ := web.AppConfig.String("travel_api_origin")
 
-	// waiting for the goroutine to return result
+	// separate goroutine for location api call
+	locationChannel := make(chan locationResult, 1)
+	go fetchLocation(ctx, baseURL, location, locationChannel)
+
+	// block until the location goroutine sponse
+	var slug string
 	select {
-	case res := <-resultChannel:
-		return res.properties, res.err
+	case res := <-locationChannel:
+		if res.err != nil {
+			return nil, res.err
+		}
+		slug = res.slug
+
 	case <-ctx.Done():
-		return nil, fmt.Errorf("Request timed out while fetching properties")
+		return nil, fmt.Errorf("Timed out , waiting fo location reponse")
+	}
+
+	// convert slug separator '/' with ':'
+	categorySlug := strings.ReplaceAll(slug, "/", ":")
+
+	categoryChannel := make(chan categoryResult, 1)
+	go fetchCategory(ctx, baseURL, origin, categorySlug, categoryChannel)
+
+	// block until the category gorouting responds
+	select {
+	case res := <-categoryChannel:
+		if res.err != nil {
+			return nil, res.err
+		}
+		return flattenProperties(res.items), nil
+	case <-ctx.Done():
+		return nil, fmt.Errorf("Timed out, waiting for properties reponse")
 	}
 }
 
-// perform two external api calls
-func fetchProperties(ctx context.Context, location string) ([]models.Property, error) {
-	baseURL, _ := web.AppConfig.String("travel_api_base_url")
-	fmt.Printf("Debug: url: [%s]\n", baseURL)
-	origin, _ := web.AppConfig.String("travel_api_origin")
+func fetchLocation(ctx context.Context, baseURL string, keyword string, out chan<- locationResult) {
+	url := fmt.Sprintf("%s/v1/location?keyword=%s", baseURL, keyword)
 
-	// resolve location slug
-	locationURL := fmt.Sprintf("%s/v1/location?keyword=%s", baseURL, location)
-
-	locationResp, err := utils.FetchandDecode[models.LocationResponse](ctx, locationURL, nil)
-
+	resp, err := utils.FetchandDecode[models.LocationResponse](ctx, url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to fetch location: %w", err)
+		out <- locationResult{err: fmt.Errorf("location API error: %w", err)}
+		return
 	}
 
-	if locationResp == nil || len(locationResp.GeoInfo.Slug) == 0 {
-		return nil, fmt.Errorf("No location data found for: %s", location)
+	if resp == nil || resp.GeoInfo.LocationSlug == "" {
+		out <- locationResult{err: fmt.Errorf("no location slug found for: %s", keyword)}
+		return
 	}
 
-	// extract slug from the result
-	rawSlug := locationResp.GeoInfo.Slug
+	out <- locationResult{slug: resp.GeoInfo.LocationSlug}
+}
 
-	//replace '/' with ':'
-	categorySlug := strings.ReplaceAll(rawSlug, "/", ":")
-
-	categoryURL := fmt.Sprintf("%s/v1/category/details/%s?items=1", baseURL, categorySlug)
+func fetchCategory(ctx context.Context, baseURL string, origin string, slug string, out chan<- categoryResult) {
+	url := fmt.Sprintf("%s/v1/category/details/%s?items=1", baseURL, slug)
 
 	headers := map[string]string{
 		"Origin": origin,
 	}
 
-	categoryResp, err := utils.FetchandDecode[models.CategoryResponse](ctx, categoryURL, headers)
-
+	resp, err := utils.FetchandDecode[models.CategoryResponse](ctx, url, headers)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to fetch properties: %w", err)
+		out <- categoryResult{err: fmt.Errorf("category API error: %w", err)}
+		return
 	}
 
-	if categoryResp == nil {
-		return nil, fmt.Errorf("Empty response from category API")
+	if resp == nil {
+		out <- categoryResult{err: fmt.Errorf("empty response from category API")}
+		return
 	}
 
-	properties := flattenProperties(categoryResp.Result.Items)
-
-	return properties, nil
+	out <- categoryResult{items: resp.Result.Items}
 }
 
 // map PropertyItem structs to Property model
