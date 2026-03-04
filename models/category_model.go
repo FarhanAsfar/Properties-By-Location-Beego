@@ -12,9 +12,10 @@ type CategoryData struct {
 // each property returned by the api
 
 type PropertyItem struct {
-	ID      string `json:"id"`
-	Name    string `json:"Name"`
-	Country string `json:"Country"`
-	City    string `json:"City"`
-	Slug    string `json:"Slug"`
+	ID           string `json:"id"`
+	Name         string `json:"Name"`
+	PropertyName string `json:"property_name"`
+	Country      string `json:"Country"`
+	City         string `json:"City"`
+	Slug         string `json:"Slug"`
 }
