@@ -18,5 +18,7 @@ func ValidateAPIKey(ctx *context.Context) {
 
 		payload, _ := json.Marshal(map[string]string{"error": "unauthorized"})
 		ctx.WriteString(string(payload))
+
+		ctx.ResponseWriter.Started = true // stopping beego from executing the next handler
 	}
 }
