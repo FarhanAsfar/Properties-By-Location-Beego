@@ -7,5 +7,9 @@ import (
 )
 
 func init() {
-	web.Router("/", &controllers.MainController{})
+
+	ns := web.NewNamespace("/api/v1",
+		web.NSRouter("/get-properties/:location", &controllers.PropertyController{}, "get:Get"),
+	)
+	web.AddNamespace(ns)
 }
