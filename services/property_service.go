@@ -83,3 +83,19 @@ func fetchProperties(ctx context.Context, location string) ([]models.Property, e
 
 	return properties, nil
 }
+
+// map PropertyItem structs to Property model
+func flattenProperties(items []models.PropertyItem) []models.Property {
+	result := make([]models.Property, 0, len(items))
+
+	for _, item := range items {
+		result = append(result, models.Property{
+			ID:           item.ID,
+			PropertyName: item.PropertyName,
+			Country:      item.Country,
+			City:         item.City,
+			Slug:         item.Slug,
+		})
+	}
+	return result
+}
