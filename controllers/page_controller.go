@@ -75,7 +75,7 @@ func (c *PageController) Get() {
 		c.Data["HasProperties"] = len(props) > 0
 	}
 
-	c.TplName = "properities.tpl"
+	c.TplName = "properties.tpl"
 }
 
 // make an http get request to our internal endpoint
