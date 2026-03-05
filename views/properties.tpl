@@ -68,20 +68,20 @@
       background: #141414;
       border: 1px solid #1e1e1e;
       border-radius: 12px;
-      overflow: hidden;
+      padding: 1.4rem;
       display: flex;
       flex-direction: column;
+      gap: 0.75rem;
       transition: border-color 0.2s, transform 0.2s;
     }
 
     .card:hover { border-color: #c9a84c44; transform: translateY(-2px); }
 
-    /* Card top row: type badge + price */
-    .card-header {
+    /* Type badge + price on same row */
+    .card-top {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 1.2rem 1.2rem 0;
     }
 
     .card-badge {
@@ -98,31 +98,26 @@
     .card-price { font-size: 1rem; font-weight: 600; color: #f0ede6; }
     .card-price span { font-size: 0.75rem; font-weight: 400; color: #555; }
 
-    /* Card body */
-    .card-body { padding: 1rem 1.2rem; flex: 1; }
-
-    .card-body h2 {
+    /* Property name */
+    .card h2 {
       font-family: 'Playfair Display', serif;
       font-size: 1.05rem;
       line-height: 1.35;
-      margin-bottom: 0.5rem;
       color: #f0ede6;
     }
 
-    .card-location { font-size: 0.82rem; color: #666; margin-bottom: 0.9rem; }
+    /* Location line */
+    .card-location { font-size: 0.82rem; color: #666; }
 
-    /* Stats row: beds / baths / guests */
-    .card-stats {
+    /* Review + stars row */
+    .card-review {
       display: flex;
-      gap: 1rem;
+      align-items: center;
+      gap: 0.5rem;
       font-size: 0.82rem;
       color: #888;
-      margin-bottom: 0.9rem;
-      flex-wrap: wrap;
+      margin-top: auto;
     }
-
-    /* Review row */
-    .card-review { display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; color: #888; }
 
     .review-score {
       background: #1e3a1e;
@@ -132,23 +127,6 @@
       padding: 0.2rem 0.5rem;
       border-radius: 4px;
     }
-
-    /* Card footer: booking CTA */
-    .card-footer { padding: 0.9rem 1.2rem; border-top: 1px solid #1a1a1a; }
-
-    .card-footer a {
-      display: block;
-      text-align: center;
-      padding: 0.6rem;
-      background: #c9a84c;
-      color: #0d0d0d;
-      font-size: 0.85rem;
-      font-weight: 600;
-      border-radius: 6px;
-      text-decoration: none;
-      transition: background 0.2s;
-    }
-    .card-footer a:hover { background: #e0bb60; }
 
     footer { margin-top: 4rem; text-align: center; color: #2a2a2a; font-size: 0.8rem; }
   </style>
@@ -162,7 +140,6 @@
     </div>
 
     {{if .Error}}
-      {{/* Server-rendered error — no JS needed */}}
       <div class="error-box">
         <p>{{.Error}}</p>
         <a href="/">&#8592; Try a different location</a>
@@ -179,45 +156,27 @@
         {{range .Properties}}
         <div class="card">
 
-          <div class="card-header">
-            {{if .PropertyType}}
-              <span class="card-badge">{{.PropertyType}}</span>
-            {{else}}
-              <span class="card-badge">Property</span>
-            {{end}}
+          <div class="card-top">
+            <span class="card-badge">{{if .PropertyType}}{{.PropertyType}}{{else}}Property{{end}}</span>
             {{if .Price}}
               <span class="card-price">${{printf "%.0f" .Price}} <span>/ night</span></span>
             {{end}}
           </div>
 
-          <div class="card-body">
-            <h2>{{if .PropertyName}}{{.PropertyName}}{{else}}Unnamed Property{{end}}</h2>
+          <h2>{{if .PropertyName}}{{.PropertyName}}{{else}}Unnamed Property{{end}}</h2>
 
-            {{if .Display}}
-              <p class="card-location">&#128205; {{.Display}}</p>
-            {{else if .City}}
-              <p class="card-location">&#128205; {{.City}}{{if .Country}}, {{.Country}}{{end}}</p>
-            {{end}}
+          {{if .City}}
+            <p class="card-location">
+              &#128205; {{.City}}{{if .Country}}, {{.Country}}{{end}}
+            </p>
+          {{end}}
 
-            <div class="card-stats">
-              {{if .Bedrooms}}<span>&#127beds; {{.Bedrooms}} bed{{if gt .Bedrooms 1}}s{{end}}</span>{{end}}
-              {{if .Bathrooms}}<span>&#x1F6C1; {{.Bathrooms}} bath{{if gt .Bathrooms 1}}s{{end}}</span>{{end}}
-              {{if .Occupancy}}<span>&#128101; Up to {{.Occupancy}} guests</span>{{end}}
+          {{if .ReviewScore}}
+            <div class="card-review">
+              <span class="review-score">{{printf "%.0f" .ReviewScore}}</span>
+              <span>Review score</span>
+              {{if .StarRating}}&nbsp;&#183;&nbsp;{{.StarRating}} &#9733;{{end}}
             </div>
-
-            {{if .ReviewScore}}
-              <div class="card-review">
-                <span class="review-score">{{printf "%.0f" .ReviewScore}}</span>
-                <span>Review score</span>
-                {{if .StarRating}}&nbsp;&#183;&nbsp;{{.StarRating}}&#9733;{{end}}
-              </div>
-            {{end}}
-          </div>
-
-          {{if .URL}}
-          <div class="card-footer">
-            <a href="{{.URL}}" target="_blank" rel="noopener noreferrer">View Property &rarr;</a>
-          </div>
           {{end}}
 
         </div>
