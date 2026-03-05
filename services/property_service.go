@@ -36,7 +36,7 @@ func GetPropertiesByLocation(location string) ([]models.Property, error) {
 	locationChannel := make(chan locationResult, 1)
 	go fetchLocation(ctx, baseURL, location, locationChannel)
 
-	// block until the location goroutine response
+	// block until we get the location goroutine response
 	var slug string
 	select {
 	case res := <-locationChannel:
