@@ -8,6 +8,15 @@ import (
 )
 
 func init() {
+	// ---page routes---
+	// homepage
+	web.Router("/", &controllers.HomeController{}, "get:Get")
+
+	// search redirect
+	web.Router("/search", &controllers.SearchRedirectController{}, "get:Get")
+
+	// properties page
+	web.Router("/all/:location", &controllers.PageController{}, "get:Get")
 
 	ns := web.NewNamespace("/api/v1",
 		web.NSBefore(middlewares.ValidateAPIKey),
